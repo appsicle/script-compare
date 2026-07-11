@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which Script Wins?</title>
+<style>
+  :root {
+    --ground: #f2f4f7;
+    --panel: #ffffff;
+    --panel-2: #f5f7fa;
+    --ink: #1c2433;
+    --ink-soft: #66707f;
+    --line: #dde2e9;
+    --blue: #2563c7;
+    --orange: #c2621d;
+    --win: #1e8a52;
+    --win-soft: #1e8a5218;
+    --warn: #b3730f;
+    --bad: #b3413d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #141821; --panel: #1d2330; --panel-2: #171c27;
+      --ink: #e9ecf2; --ink-soft: #9aa4b5; --line: #2e3646;
+      --blue: #6ea8ff; --orange: #f0a05a;
+      --win: #52c98a; --win-soft: #52c98a22; --warn: #e0a83e; --bad: #e07a76;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141821; --panel: #1d2330; --panel-2: #171c27;
+    --ink: #e9ecf2; --ink-soft: #9aa4b5; --line: #2e3646;
+    --blue: #6ea8ff; --orange: #f0a05a;
+    --win: #52c98a; --win-soft: #52c98a22; --warn: #e0a83e; --bad: #e07a76;
+  }
+  :root[data-theme="light"] {
+    --ground: #f2f4f7; --panel: #ffffff; --panel-2: #f5f7fa;
+    --ink: #1c2433; --ink-soft: #66707f; --line: #dde2e9;
+    --blue: #2563c7; --orange: #c2621d;
+    --win: #1e8a52; --win-soft: #1e8a5218; --warn: #b3730f; --bad: #b3413d;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1rem 4rem;
+    background: var(--ground); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 0; text-align: center; text-wrap: balance; }
+  .tagline { text-align: center; color: var(--ink-soft); margin: 0; font-size: 1.05rem; }
+
+  .boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 700px) { .boxes { grid-template-columns: 1fr; } }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .box header { padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: baseline; }
+  .box h2 { margin: 0; font-size: 1rem; }
+  .box.one h2 { color: var(--blue); }
+  .box.two h2 { color: var(--orange); }
+  .box .count { font-size: 0.8rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  textarea {
+    display: block; width: 100%; min-height: 220px; border: 0; resize: vertical;
+    background: var(--panel-2); color: var(--ink);
+    font-family: inherit; font-size: 0.95rem; line-height: 1.6; padding: 1rem;
+  }
+  textarea:focus { outline: 3px solid var(--blue); outline-offset: -3px; }
+
+  .example-row { text-align: center; }
+  button.example {
+    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 99px; padding: 0.5rem 1.2rem; font-size: 0.9rem; cursor: pointer;
+  }
+  button.example:hover { border-color: var(--blue); color: var(--blue); }
+  button.example:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .winner {
+    background: var(--panel); border: 2px solid var(--line); border-radius: 14px;
+    padding: 1.5rem 1.25rem; text-align: center;
+  }
+  .winner.decided { border-color: var(--win); background: var(--win-soft); }
+  .winner .big { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; margin: 0; }
+  .winner .sub { color: var(--ink-soft); margin: 0.4rem 0 0; font-size: 1rem; }
+  .winner .scoreline { margin-top: 0.6rem; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .winner .scoreline .s1 { color: var(--blue); font-weight: 700; }
+  .winner .scoreline .s2 { color: var(--orange); font-weight: 700; }
+
+  .checks { display: flex; flex-direction: column; gap: 0.9rem; }
+  .check { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.25rem; }
+  .check h3 { margin: 0 0 0.15rem; font-size: 1.05rem; }
+  .check .plain { margin: 0 0 0.8rem; color: var(--ink-soft); font-size: 0.9rem; }
+  .side { display: grid; grid-template-columns: 5.2rem 1fr 6.5rem; gap: 0.7rem; align-items: center; margin-top: 0.35rem; font-size: 0.9rem; }
+  .side .who { font-weight: 600; }
+  .side.s1 .who { color: var(--blue); }
+  .side.s2 .who { color: var(--orange); }
+  .track { height: 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 6px; transition: width 0.25s ease; }
+  .side.s1 .fill { background: var(--blue); }
+  .side.s2 .fill { background: var(--orange); }
+  .grade { text-align: right; font-weight: 600; }
+  .grade.great { color: var(--win); }
+  .grade.ok { color: var(--warn); }
+  .grade.weak { color: var(--bad); }
+  .detail { font-size: 0.8rem; color: var(--ink-soft); margin-top: 0.5rem; }
+
+  .footnote { text-align: center; color: var(--ink-soft); font-size: 0.85rem; max-width: 55ch; margin: 0 auto; }
+  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1>Which Script Wins? 🏆</h1>
+  <p class="tagline">Paste two TikTok scripts below. We'll tell you which one works better — and exactly why.</p>
+
+  <div class="boxes">
+    <div class="box one">
+      <header><h2>Script 1</h2><span class="count" id="count1"></span></header>
+      <textarea id="text1" spellcheck="false" placeholder="Paste your first script here..."></textarea>
+    </div>
+    <div class="box two">
+      <header><h2>Script 2</h2><span class="count" id="count2"></span></header>
+      <textarea id="text2" spellcheck="false" placeholder="Paste your second script here..."></textarea>
+    </div>
+  </div>
+
+  <div class="example-row">
+    <button class="example" id="loadExample" type="button">Show me an example</button>
+  </div>
+
+  <div class="winner" id="winner">
+    <p class="big" id="winnerBig">Paste both scripts to see who wins</p>
+    <p class="sub" id="winnerSub">Higher score = more likely to hold viewers on TikTok.</p>
+    <p class="scoreline" id="scoreline"></p>
+  </div>
+
+  <div class="checks" id="checks"></div>
+
+  <p class="footnote">Scores are out of 100 for each check. They're smart guesses based on what holds attention in short videos — not magic. Trust your gut too.</p>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+
+  const EXAMPLE_1 = "Zaheen sees an opportunity and ults into BLG's backline. Bin's K'Sante ults Zaheen to delay Zaheen's flash knock-up engage onto his carries, giving Knight enough time to position his ball, and stays in the max tether range to land the perfect Orianna ult onto HLE's backline. And ON follows up with the massive Neeko ult, catching all four members of HLE. And with an opening like that, Viper uses Ezreal and Xun uses Pantheon Q to finish them off. And that's how BLG dissect HLE to win the game.";
+  const EXAMPLE_2 = "Zaheen finds what looks like the perfect engage onto BLG's backline. But ON steps forward and threatens a counter-engage, forcing the rest of HLE to hesitate instead of following him in. Bin then ults Zaheen, delaying his Q stacks and stopping the instant Flash knock-up onto Knight. That gives Knight enough time to catch HLE's follow-up with Orianna ult. ON chains Neeko ult onto all four, then Viper and Xun clean up. BLG win the fight by separating Zaheen from his team for just a few seconds.";
+
+  const WORDS_PER_SECOND = 3; // typical TikTok voiceover pace
+
+  function sentences(t) { return t.split(/[.!?]+/).map(s => s.trim()).filter(Boolean); }
+  function words(t) { return t.split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w)); }
+  function syllables(word) {
+    const w = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (!w) return 0;
+    let g = (w.match(/[aeiouy]+/g) || []).length;
+    if (w.endsWith('e') && g > 1) g--;
+    return Math.max(1, g);
+  }
+
+  const HOOK_WORDS = ['looks like', 'perfect', 'but ', 'almost', 'never', 'secret', 'mistake', 'wrong', 'insane', 'hidden', 'why ', 'how '];
+  const LINK_WORDS = ['then', 'but ', ' so ', 'forcing', 'giving', 'that gives', 'because', 'instead', 'delaying', 'stopping', 'follows up', 'chains', 'clean up', 'finish', 'by '];
+  const ENDING_WORDS = ["that's how", ' win ', ' wins ', ' by ', 'separat', 'dissect', 'lesson', 'that is why', "that's why"];
+
+  function analyze(t) {
+    const s = sentences(t), w = words(t);
+    if (!w.length) return null;
+    const first = (s[0] || '').toLowerCase() + ' ';
+    const last = ' ' + (s[s.length - 1] || '').toLowerCase() + ' ';
+    const lower = ' ' + t.toLowerCase() + ' ';
+
+    const hookHits = HOOK_WORDS.filter(h => first.includes(h)).length;
+    const firstLen = words(s[0] || '').length;
+    const linkHits = LINK_WORDS.reduce((a, c) => a + (lower.split(c).length - 1), 0);
+    const endHits = ENDING_WORDS.filter(p => last.includes(p)).length;
+
+    const lens = s.map(x => words(x).length);
+    const avgLen = lens.reduce((a, b) => a + b, 0) / lens.length;
+    const maxLen = Math.max(...lens);
+    const dur = w.length / WORDS_PER_SECOND;
+    const syl = w.reduce((a, x) => a + syllables(x), 0);
+    const flesch = 206.835 - 1.015 * (w.length / s.length) - 84.6 * (syl / w.length);
+
+    const scores = {
+      hook: Math.min(100, hookHits * 40 + (firstLen <= 14 ? 30 : firstLen <= 20 ? 15 : 0)),
+      length: dur >= 18 && dur <= 34 ? 100 : dur < 18 ? Math.max(0, 100 - (18 - dur) * 10) : Math.max(0, 100 - (dur - 34) * 8),
+      shortSentences: Math.max(0, Math.min(100, 100 - (avgLen - 12) * 8 - Math.max(0, maxLen - 25) * 3)),
+      flow: Math.min(100, (linkHits / s.length) * 90),
+      ending: Math.min(100, endHits * 50),
+      easy: Math.max(0, Math.min(100, (flesch - 30) * 1.6))
+    };
+    const total = Math.round(
+      scores.hook * 0.28 + scores.length * 0.12 + scores.shortSentences * 0.20 +
+      scores.flow * 0.18 + scores.ending * 0.12 + scores.easy * 0.10
+    );
+    return { s, w, dur, avgLen, maxLen, hookHits, linkHits, endHits, scores, total };
+  }
+
+  const CHECKS = [
+    {
+      key: 'hook',
+      title: '1. Does the first line grab you?',
+      plain: 'People decide in 3 seconds whether to keep watching. Tease something — "what looks like", "but", "the mistake that..."',
+      detail: (a) => a.hookHits > 0 ? 'Found ' + a.hookHits + ' attention-grabbing word' + (a.hookHits > 1 ? 's' : '') + ' in the opening line. Nice.' : 'No teaser words in the first line. It just states facts — easy to scroll past.'
+    },
+    {
+      key: 'length',
+      title: '2. Is it the right length?',
+      plain: 'Read out loud, 18–34 seconds is the sweet spot. Too short feels thin, too long loses people.',
+      detail: (a) => 'This one takes about ' + Math.round(a.dur) + ' seconds to say (' + a.w.length + ' words).'
+    },
+    {
+      key: 'shortSentences',
+      title: '3. Are the sentences short and punchy?',
+      plain: 'Short sentences are easy to follow. One giant run-on sentence makes people swipe away.',
+      detail: (a) => 'Average sentence: ' + a.avgLen.toFixed(0) + ' words. Longest: ' + a.maxLen + ' words.' + (a.maxLen > 30 ? ' That longest one is a mouthful — split it up.' : '')
+    },
+    {
+      key: 'flow',
+      title: '4. Does one thing lead to the next?',
+      plain: 'Words like "but", "then", "so" make it a story instead of a list. Stories keep people watching.',
+      detail: (a) => 'Found ' + a.linkHits + ' connecting words across ' + a.s.length + ' sentences.'
+    },
+    {
+      key: 'ending',
+      title: '5. Does the ending make a point?',
+      plain: 'The last line should tell people the lesson — not just "and then they won."',
+      detail: (a) => a.endHits > 0 ? 'The ending lands a takeaway. Good.' : 'The ending just stops. Add a "here’s why this worked" line.'
+    },
+    {
+      key: 'easy',
+      title: '6. Is it easy to say out loud?',
+      plain: 'Simple words read smoother on a voiceover. Fewer tongue-twisters, better delivery.',
+      detail: () => ''
+    }
+  ];
+
+  function gradeWord(score) {
+    if (score >= 70) return { word: 'Great ✅', cls: 'great' };
+    if (score >= 40) return { word: 'OK 👍', cls: 'ok' };
+    return { word: 'Weak ⚠️', cls: 'weak' };
+  }
+
+  function render() {
+    const t1 = $('text1').value.trim();
+    const t2 = $('text2').value.trim();
+    const a1 = analyze(t1);
+    const a2 = analyze(t2);
+
+    $('count1').textContent = a1 ? a1.w.length + ' words · ~' + Math.round(a1.dur) + 's spoken' : '';
+    $('count2').textContent = a2 ? a2.w.length + ' words · ~' + Math.round(a2.dur) + 's spoken' : '';
+
+    const winner = $('winner');
+    if (!a1 || !a2) {
+      winner.classList.remove('decided');
+      $('winnerBig').textContent = 'Paste both scripts to see who wins';
+      $('winnerSub').textContent = 'Higher score = more likely to hold viewers on TikTok.';
+      $('scoreline').textContent = '';
+      $('checks').innerHTML = '';
+      return;
+    }
+
+    winner.classList.add('decided');
+    if (a1.total === a2.total) {
+      $('winnerBig').textContent = "🤝 It's a tie!";
+      $('winnerSub').textContent = 'Change a line in either script to break it.';
+    } else {
+      const w = a1.total > a2.total ? 1 : 2;
+      $('winnerBig').textContent = '🏆 Script ' + w + ' wins!';
+      $('winnerSub').textContent = 'It should hold TikTok viewers better. The checks below show exactly why.';
+    }
+    $('scoreline').innerHTML = 'Script 1: <span class="s1">' + a1.total + '</span> / 100 &nbsp;·&nbsp; Script 2: <span class="s2">' + a2.total + '</span> / 100';
+
+    $('checks').innerHTML = CHECKS.map(c => {
+      const s1 = Math.round(a1.scores[c.key]), s2 = Math.round(a2.scores[c.key]);
+      const g1 = gradeWord(s1), g2 = gradeWord(s2);
+      const d1 = c.detail(a1), d2 = c.detail(a2);
+      return '<div class="check">' +
+        '<h3>' + c.title + '</h3>' +
+        '<p class="plain">' + c.plain + '</p>' +
+        '<div class="side s1"><span class="who">Script 1</span><div class="track"><div class="fill" style="width:' + s1 + '%"></div></div><span class="grade ' + g1.cls + '">' + g1.word + '</span></div>' +
+        (d1 ? '<div class="detail">' + d1 + '</div>' : '') +
+        '<div class="side s2"><span class="who">Script 2</span><div class="track"><div class="fill" style="width:' + s2 + '%"></div></div><span class="grade ' + g2.cls + '">' + g2.word + '</span></div>' +
+        (d2 ? '<div class="detail">' + d2 + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  $('loadExample').addEventListener('click', function () {
+    $('text1').value = EXAMPLE_1;
+    $('text2').value = EXAMPLE_2;
+    render();
+  });
+  $('text1').addEventListener('input', render);
+  $('text2').addEventListener('input', render);
+  render();
+})();
+</script>
+
+</html>
